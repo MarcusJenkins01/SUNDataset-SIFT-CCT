@@ -4,15 +4,18 @@
 
 %% Step 0: Set up parameters, vlfeat, category list, and image paths.
 
-FEATURE = 'tiny image';
+%FEATURE = 'tiny image';
 %FEATURE = 'colour histogram';
+
+FEATURE = 'bag of sift';
+%FEATURE = 'spatial pyramids';
 
 CLASSIFIER = 'nearest neighbor';
 
 % Set up paths to VLFeat functions. 
 % See http://www.vlfeat.org/matlab/matlab.html for VLFeat Matlab documentation
 % This should work on 32 and 64 bit versions of Windows, MacOS, and Linux
-%run('vlfeat/toolbox/vl_setup')
+run('vlfeat/toolbox/vl_setup')
 
 data_path = '../data/';
 
@@ -124,7 +127,7 @@ switch lower(CLASSIFIER)
     % predicted_categories is an M x 1 cell array, where each entry is a string
     %  indicating the predicted category for each test image.
     % Useful functions: pdist2 (Matlab) and vl_alldist2 (from vlFeat toolbox)
-        predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats);
+        predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats, 1);
     case 'support vector machine'
         predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats);
 end
