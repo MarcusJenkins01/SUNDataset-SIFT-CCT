@@ -20,7 +20,7 @@ function vocab = build_vocabulary( image_paths, vocab_size )
         img = imread(img_path);
         img = single(vl_imdown(rgb2gray(img)));
     
-        [locations, SIFT_features] = vl_dsift(img);
+        [~, SIFT_features] = vl_dsift(img);
         
         if isempty(all_SIFT_features)
             all_SIFT_features = SIFT_features;
@@ -29,7 +29,7 @@ function vocab = build_vocabulary( image_paths, vocab_size )
         end
     end
 
-    [centers, assignments] = vl_kmeans(single(all_SIFT_features), vocab_size);
+    [centers, ~] = vl_kmeans(single(all_SIFT_features), vocab_size);
     vocab = centers;
 
     %{ 

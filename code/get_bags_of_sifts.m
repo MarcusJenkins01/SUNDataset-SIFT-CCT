@@ -22,7 +22,50 @@ function image_feats = get_bags_of_sifts(image_paths)
     % Don't forget to normalize the histogram, or else a larger image with more
     % SIFT features will look very different from a smaller version of the same
     % image.
+
+    load('vocab.mat');
     
+    vocab_size = size(vocab, 2);
+    N = length(image_paths);
+    image_feats_out = zeros(N, vocab_size);
+    
+    % Iterate through each image
+    for i=1:N
+        img_path = image_paths{i};
+        
+        % Load the image
+        img = imread(img_path);
+        img = single(vl_imdown(rgb2gray(img)));
+        
+        % Compute the DSIFT features of the image
+        [~, SIFT_features] = vl_dsift(img);
+        
+        % Compute the distance matrix of each DSIFT descriptor to each
+        % visual word in the vocabulary
+        D = vl_alldist2(single(SIFT_features), vocab);
+
+        % Find the closest visual word in the vocabulary for each descriptor
+        [~, closest_visual_words] = min(D, [], 2);
+        
+        % Create the bag-of-visual-words histogram
+        bovw_hist = zeros(1, vocab_size);
+
+        for desc_i=1:size(closest_visual_words, 1)
+            closest_i = closest_visual_words(desc_i);
+
+            % Increment the count of the closest visual word
+            bovw_hist(closest_i) = bovw_hist(closest_i) + 1;
+        end
+
+        % Normalise the histogram
+        bovw_hist = normalize(bovw_hist);
+        
+        % Assign the feature vector (histogram) to the output matrix
+        image_feats_out(i, :) = bovw_hist(:);
+    end
+
+    image_feats = image_feats_out;
+
     %{
     Useful functions:
     [locations, SIFT_features] = vl_dsift(img) 
@@ -48,43 +91,4 @@ function image_feats = get_bags_of_sifts(image_paths)
         cluster center for every SIFT feature. You could easily code this
         yourself, but vl_alldist2 tends to be much faster.
     %}
-
-    load('vocab.mat');
-    
-    vocab_size = size(vocab, 2);
-    N = length(image_paths);
-    image_feats_out = zeros(N, vocab_size);
-
-    for i=1:N
-        img_path = image_paths{i};
-        
-        % Load the image
-        img = imread(img_path);
-        img = single(vl_imdown(rgb2gray(img)));
-        
-        % Compute the DSIFT features of the image
-        [locations, SIFT_features] = vl_dsift(img);
-        
-        % Compute the distance matrix of each DSIFT descriptor to each
-        % visual word in the vocabulary
-        D = vl_alldist2(single(SIFT_features), vocab);
-
-        % Find the closest visual word in the vocabulary for each descriptor
-        [d_min, closest_visual_words] = min(D, [], 2);
-        
-        % Create the bag-of-visual-words histogram
-        bovw_hist = zeros(1, vocab_size);
-
-        for desc_i=1:size(closest_visual_words, 1)
-            closest_i = closest_visual_words(desc_i);
-
-            % Increment the count of the closest visual word
-            bovw_hist(closest_i) = bovw_hist(closest_i) + 1;
-        end
-        
-        % Assign the feature vector (histogram) to the output matrix
-        image_feats_out(i, :) = bovw_hist(:);
-    end
-
-    image_feats = image_feats_out;
 end
