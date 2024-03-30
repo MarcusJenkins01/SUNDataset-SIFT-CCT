@@ -83,14 +83,14 @@ switch lower(FEATURE)
         if ~exist('vocab.mat', 'file')
             fprintf('No existing dictionary found. Computing one from training images\n')
             vocab_size = 50; % you need to test the influence of this parameter
-            vocab = build_vocabulary(train_image_paths, vocab_size); %Also allow for different sift parameters
+            vocab = build_vocabulary(train_image_paths, vocab_size, 4, 3, 'opponent_w'); %Also allow for different sift parameters
             save('vocab.mat', 'vocab')
         end
         
         % YOU CODE get_bags_of_sifts.m
         if ~exist('image_feats.mat', 'file')
-            train_image_feats = get_bags_of_sifts(train_image_paths); %Allow for different sift parameters
-            test_image_feats  = get_bags_of_sifts(test_image_paths); 
+            train_image_feats = get_bags_of_sifts(train_image_paths, 4, 3, 'opponent_w'); %Allow for different sift parameters
+            test_image_feats  = get_bags_of_sifts(test_image_paths, 4, 3, 'opponent_w'); 
             save('image_feats.mat', 'train_image_feats', 'test_image_feats')
         end
       case 'spatial pyramids'
@@ -106,7 +106,7 @@ end
 
 fprintf('Using %s classifier to predict test set categories\n', CLASSIFIER)
 
-switch lower(CLASSIFIER)    
+switch lower(CLASSIFIER)
     case 'nearest neighbor'
     %Here, you need to reimplement nearest_neighbor_classify. My P-code
     %implementation has k=1 set. You need to allow for varying this
@@ -127,7 +127,7 @@ switch lower(CLASSIFIER)
     % predicted_categories is an M x 1 cell array, where each entry is a string
     %  indicating the predicted category for each test image.
     % Useful functions: pdist2 (Matlab) and vl_alldist2 (from vlFeat toolbox)
-        predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats, 11);
+        predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats, 7);
     case 'support vector machine'
         predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats);
 end

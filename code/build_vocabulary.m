@@ -3,12 +3,17 @@
 %This function will sample SIFT descriptors from the training images,
 %cluster them with kmeans, and then return the cluster centers.
 
-function vocab = build_vocabulary( image_paths, vocab_size )
+function vocab = build_vocabulary(image_paths, vocab_size, step, bin_size, color_space)
     % The inputs are images, a N x 1 cell array of image paths and the size of 
     % the vocabulary.
     
     % The output 'vocab' should be vocab_size x 128. Each row is a cluster
     % centroid / visual word.
+    
+    % Default will be grayscale
+    if nargin < 5
+        color_space = 'grayscale';
+    end
     
     all_SIFT_features = [];
     N = length(image_paths);
@@ -18,10 +23,13 @@ function vocab = build_vocabulary( image_paths, vocab_size )
         
         % Load the image
         img = imread(img_path);
-        img = single(vl_imdown(rgb2gray(img)));
-    
-        [~, SIFT_features] = vl_dsift(img);
         
+        % Use our get_dsift_features function to get the SIFT descriptors
+        % for a given set of parameters
+        SIFT_features = get_dsift_features(img, step, bin_size, color_space);
+
+        % Concatenate the image SIFT features to form the full vocabulary 
+        % to be clustered by k-means
         if isempty(all_SIFT_features)
             all_SIFT_features = SIFT_features;
         else

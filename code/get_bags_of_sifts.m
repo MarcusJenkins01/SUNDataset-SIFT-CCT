@@ -2,7 +2,7 @@
 % University 
 % Michal Mackiewicz, UEA
 
-function image_feats = get_bags_of_sifts(image_paths)
+function image_feats = get_bags_of_sifts(image_paths, step, bin_size, color_space)
     % image_paths is an N x 1 cell array of strings where each string is an
     % image path on the file system.
     
@@ -22,7 +22,13 @@ function image_feats = get_bags_of_sifts(image_paths)
     % Don't forget to normalize the histogram, or else a larger image with more
     % SIFT features will look very different from a smaller version of the same
     % image.
-
+    
+    % Default colour space will be grayscale
+    if nargin < 4
+        color_space = 'grayscale';
+    end
+    
+    % Load our dictionary of visual words
     load('vocab.mat');
     
     vocab_size = size(vocab, 2);
@@ -35,10 +41,10 @@ function image_feats = get_bags_of_sifts(image_paths)
         
         % Load the image
         img = imread(img_path);
-        img = single(vl_imdown(rgb2gray(img)));
         
-        % Compute the DSIFT features of the image
-        [~, SIFT_features] = vl_dsift(img);
+        % Use our get_dsift_features function to get the SIFT descriptors
+        % for a given set of parameters
+        SIFT_features = get_dsift_features(img, step, bin_size, color_space);
         
         % Compute the distance matrix of each DSIFT descriptor to each
         % visual word in the vocabulary
