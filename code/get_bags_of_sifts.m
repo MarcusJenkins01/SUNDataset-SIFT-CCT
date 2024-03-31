@@ -41,6 +41,8 @@ function image_feats = get_bags_of_sifts(image_paths, step, bin_size, color_spac
         
         % Load the image
         img = imread(img_path);
+        h = size(img, 1);
+        w = size(img, 2);
         
         % Use our get_dsift_features function to get the SIFT descriptors
         % for a given set of parameters
@@ -63,8 +65,8 @@ function image_feats = get_bags_of_sifts(image_paths, step, bin_size, color_spac
             bovw_hist(closest_i) = bovw_hist(closest_i) + 1;
         end
 
-        % Normalise the histogram
-        bovw_hist = normalize(bovw_hist);
+        % L1 normalise the histogram (so the sum is 1)
+        bovw_hist = bovw_hist ./ norm(bovw_hist, 1);
         
         % Assign the feature vector (histogram) to the output matrix
         image_feats_out(i, :) = bovw_hist(:);

@@ -83,14 +83,14 @@ switch lower(FEATURE)
         if ~exist('vocab.mat', 'file')
             fprintf('No existing dictionary found. Computing one from training images\n')
             vocab_size = 50; % you need to test the influence of this parameter
-            vocab = build_vocabulary(train_image_paths, vocab_size, 4, 4, 'opponent'); %Also allow for different sift parameters
+            vocab = build_vocabulary(train_image_paths, vocab_size, 2, 3, 'grayscale'); %Also allow for different sift parameters
             save('vocab.mat', 'vocab')
         end
         
         % YOU CODE get_bags_of_sifts.m
         if ~exist('image_feats.mat', 'file')
-            train_image_feats = get_bags_of_sifts(train_image_paths, 4, 4, 'opponent'); %Allow for different sift parameters
-            test_image_feats  = get_bags_of_sifts(test_image_paths, 4, 4, 'opponent'); 
+            train_image_feats = get_bags_of_sifts(train_image_paths, 2, 3, 'w'); %Allow for different sift parameters
+            test_image_feats  = get_bags_of_sifts(test_image_paths, 2, 3, 'w'); 
             save('image_feats.mat', 'train_image_feats', 'test_image_feats')
         end
       case 'spatial pyramids'

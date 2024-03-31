@@ -14,10 +14,12 @@ function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
         R  = img(:, :, 1);
         G  = img(:, :, 2);
         B  = img(:, :, 3);
+
+        % img will be O1, O2, O3 rather than RGB
         img(:, :, 1) = (R - G) ./ sqrt(2);
         img(:, :, 2) = (R + G - 2*B) ./ sqrt(6);
         img(:, :, 3) = (R + G + B) ./ sqrt(3);
-    elseif isequal(color_space, 'opponent_w')
+    elseif isequal(color_space, 'w')
         R  = img(:, :, 1);
         G  = img(:, :, 2);
         B  = img(:, :, 3);
@@ -34,8 +36,13 @@ function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
         R  = img(:, :, 1);
         G  = img(:, :, 2);
         B  = img(:, :, 3);
+
+        % rg colour space are the R and G components normalised using the
+        % luminance; B is not needed separately since B is factored into 
+        % the denominator of r and g
         r = R ./ (R + G + B);
         g = G ./ (R + G + B);
+
         img = cat(3, r, g);
     end
     
@@ -54,7 +61,7 @@ function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
         channel = single(img(:, :, ch));
         
         % Compute dense SIFT descriptors for the current channel
-        [~, SIFT_features_channel] = vl_dsift(channel, 'Step', step, 'Size', bin_size);
+        [~, SIFT_features_channel] = vl_dsift(channel, 'Step', step, 'Size', bin_size, 'Fast');
         
         % Concatenate the channel SIFT descriptors to form the full
         % descriptors for the image
