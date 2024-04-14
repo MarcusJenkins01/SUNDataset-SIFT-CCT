@@ -19,19 +19,6 @@ function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
         img(:, :, 1) = (R - G) ./ sqrt(2);
         img(:, :, 2) = (R + G - 2*B) ./ sqrt(6);
         img(:, :, 3) = (R + G + B) ./ sqrt(3);
-    elseif isequal(color_space, 'w')
-        R  = img(:, :, 1);
-        G  = img(:, :, 2);
-        B  = img(:, :, 3);
-        O1 = (R - G) ./ sqrt(2);
-        O2 = (R + G - 2*B) ./ sqrt(6);
-        O3 = (R + G + B) ./ sqrt(3);
-
-        % Normalise the O1 and O2 colour channels by the luminance, O3 
-        O1 = O1 ./ O3;
-        O2 = O2 ./ O3;
-
-        img = cat(3, O1, O2);
     elseif isequal(color_space, 'rg')
         R  = img(:, :, 1);
         G  = img(:, :, 2);
@@ -44,6 +31,8 @@ function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
         g = G ./ (R + G + B);
 
         img = cat(3, r, g);
+    elseif isequal(color_space, 'lab')
+        img = rgb2lab(img);
     end
     
     % Calculate number of colour components (channels)
