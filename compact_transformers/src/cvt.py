@@ -195,3 +195,15 @@ def cvt_7_4_32_sine(pretrained=False, progress=False,
                  img_size=img_size, positional_embedding=positional_embedding,
                  num_classes=num_classes,
                  *args, **kwargs)
+
+
+@register_model
+def cvt_sun_160(*args, **kwargs):
+    return CVT(num_layers=7,
+                num_heads=4,
+                mlp_ratio=2,
+                embedding_dim=256,
+                kernel_size=16,
+               img_size=160,
+               positional_embedding="learnable",
+               *args, **kwargs)

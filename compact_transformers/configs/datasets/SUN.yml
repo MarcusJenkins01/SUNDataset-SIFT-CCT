@@ -1,6 +1,6 @@
 dataset: ImageFolder
 num_classes: 15
-img_size: 160
+img_size: 224
 mean:
     - 0.485
     - 0.456
@@ -37,3 +37,14 @@ warmup_lr: 0.000001
 opt: adamw
 smoothing: 0.1
 workers: 8
+#lr: 0.01
+#min_lr: 0.001
+#sched: cosine
+#weight_decay: 1e-4
+#epochs: 300
+#cooldown_epochs: 10
+#warmup_epochs: 25
+#warmup_lr: 0.000001
+#opt: sgd
+#smoothing: 0.1
+#workers: 8

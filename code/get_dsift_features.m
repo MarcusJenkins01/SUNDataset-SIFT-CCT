@@ -50,7 +50,10 @@ function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
         channel = single(img(:, :, ch));
         
         % Compute dense SIFT descriptors for the current channel
-        [~, SIFT_features_channel] = vl_dsift(channel, 'Step', step, 'Size', bin_size, 'Fast');
+        [locations, SIFT_features_channel] = vl_dsift(channel, 'Step', ...
+            step, 'Size', bin_size, 'Fast');
+
+        locations
         
         % Concatenate the channel SIFT descriptors to form the full
         % descriptors for the image

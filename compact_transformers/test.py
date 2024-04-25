@@ -1,3 +1,5 @@
+import time
+
 import torch
 import torch.nn.functional as F
 from timm.data import create_dataset, create_loader, resolve_data_config, Mixup, FastCollateMixup, AugMixDataset
@@ -38,6 +40,7 @@ def test(args, amp_autocast=suppress):
     model = create_model(
         args.model,
         pretrained=False,
+        progress=False,
         checkpoint_path=args.checkpoint_path,
         num_classes=args.num_classes,
         drop_rate=args.drop,
@@ -55,6 +58,7 @@ def test(args, amp_autocast=suppress):
 
     y_pred = []
     y_true = []
+    inference_times = []
 
     with torch.no_grad():
         for i, (inputs, targets) in enumerate(data_loader):
@@ -63,7 +67,10 @@ def test(args, amp_autocast=suppress):
                 targets = targets.cuda()
 
             with amp_autocast():
+                start = time.perf_counter()
                 outputs = model(inputs)
+                end = time.perf_counter()
+                inference_times.append(end - start)
 
             if isinstance(outputs, (tuple, list)):
                 outputs = outputs[0]
@@ -77,9 +84,11 @@ def test(args, amp_autocast=suppress):
 
     y_pred = np.array(y_pred)
     y_true = np.array(y_true)
+    mean_time = sum(inference_times) / len(inference_times)
 
     accuracy = np.sum(y_pred == y_true) / len(y_true)
     print(f"Accuracy: {accuracy}")
+    print(f"Mean inference time: {mean_time}")
 
     c_mat = confusion_matrix(y_true, y_pred)
     c_mat_display = ConfusionMatrixDisplay(confusion_matrix=c_mat, display_labels=abbr_labels)
@@ -89,11 +98,11 @@ def test(args, amp_autocast=suppress):
 
 if __name__ == "__main__":
     args = Namespace(data_dir='../data',
-                     checkpoint_path='./output/train/20240327-103448-cct_sun_160-160/model_best.pth.tar',
-                     dataset='ImageFolder', test_split='test', model='cct_sun_160', prefetcher=True,
-                     num_classes=15, gp=None, img_size=(3, 160, 160), input_size=None,
+                     checkpoint_path='output/train/cct_sun_224_7_pretrained/model_best.pth.tar',
+                     dataset='ImageFolder', test_split='test', model='cct_sun_224_7', prefetcher=True,
+                     num_classes=15, gp=None, img_size=(3, 224, 224), input_size=None,
                      crop_pct=0.9, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225],
-                     interpolation='bicubic', batch_size=16, drop=0.0, drop_connect=None, drop_path=None,
+                     interpolation='bicubic', batch_size=1, drop=0.0, drop_connect=None, drop_path=None,
                      drop_block=None, bn_tf=False, bn_momentum=None, bn_eps=None, workers=8,
                      pin_mem=False, tta=0, torchscript=False)
     test(args)
