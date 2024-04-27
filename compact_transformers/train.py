@@ -739,6 +739,7 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
     losses_m = AverageMeter()
     top1_m = AverageMeter()
     top5_m = AverageMeter()
+    print(args)
 
     model.eval()
 
