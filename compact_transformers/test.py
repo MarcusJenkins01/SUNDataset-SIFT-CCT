@@ -35,6 +35,9 @@ def test(args, amp_autocast=suppress):
         num_workers=args.workers,
         distributed=False,
         pin_memory=args.pin_mem,
+        mean=args.mean,
+        std=args.std,
+        crop_pct=args.crop_pct
     )
 
     model = create_model(
@@ -98,11 +101,11 @@ def test(args, amp_autocast=suppress):
 
 if __name__ == "__main__":
     args = Namespace(data_dir='../data',
-                     checkpoint_path='output/train/cct_sun_224_7_pretrained/model_best.pth.tar',
-                     dataset='ImageFolder', test_split='test', model='cct_sun_224_7', prefetcher=True,
-                     num_classes=15, gp=None, img_size=(3, 224, 224), input_size=None,
+                     checkpoint_path='output/train/cct_sun_224_14_no_aug/model_best.pth.tar',
+                     dataset='ImageFolder', test_split='test', model='cct_sun_224_14', prefetcher=True,
+                     num_classes=15, gp=None, img_size=(3, 224, 224), input_size=224,
                      crop_pct=0.9, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225],
-                     interpolation='bicubic', batch_size=1, drop=0.0, drop_connect=None, drop_path=None,
+                     interpolation='bicubic', batch_size=16, drop=0.0, drop_connect=None, drop_path=None,
                      drop_block=None, bn_tf=False, bn_momentum=None, bn_eps=None, workers=8,
                      pin_mem=False, tta=0, torchscript=False)
     test(args)

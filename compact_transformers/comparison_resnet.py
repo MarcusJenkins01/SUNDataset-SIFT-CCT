@@ -1,4 +1,5 @@
 import os
+import time
 from argparse import Namespace
 
 import torch
@@ -6,28 +7,31 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import StepLR
 from timm.data import create_dataset, create_loader
 from timm.utils import CheckpointSaver, AverageMeter, accuracy
-from torchvision.models import resnet18, resnet34, ResNet18_Weights, ResNet34_Weights
+from torchvision.models import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 
 
-def create_resnet(num_classes, resnet, weights=None):
+def create_resnet(num_classes, resnet, weights=None, expansion=1):
     model = resnet(weights=weights)
-    model.fc = nn.Linear(512, num_classes)  # Modify output layer to produce batch size x num_classes
+    model.fc = nn.Linear(512 * expansion, num_classes)  # Modify output layer to produce batch size x num_classes
     return model
 
 
 def train(args):
     # Load the pretrained ResNet on ImageNet
-    model = create_resnet(args.num_classes, resnet34, ResNet34_Weights.IMAGENET1K_V1)
-    param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(param_count, "parameters")
+    model = create_resnet(args.num_classes, resnet50, ResNet50_Weights.IMAGENET1K_V1, 4)
     model.train()
     model.cuda()
+
+    param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(param_count, "parameters")
 
     # Load the datasets for the train and validation sets from the coursework data folders
     train_dataset = create_dataset(
         args.dataset, root=args.data_dir, split=args.train_split, is_training=False, batch_size=args.batch_size)
     val_dataset = create_dataset(
         args.dataset, root=args.data_dir, split=args.test_split, is_training=False, batch_size=args.batch_size)
+
+    collate_fn = None
 
     # Create the train and validation loader
     train_loader = create_loader(
@@ -36,10 +40,14 @@ def train(args):
         batch_size=args.batch_size,
         is_training=True,
         use_prefetcher=args.prefetcher,
-        interpolation=args.interpolation,
+        no_aug=True,
+        interpolation="bicubic",
+        mean=args.mean,
+        std=args.std,
         num_workers=args.workers,
-        distributed=False,
-        pin_memory=args.pin_mem,
+        distributed=args.distributed,
+        collate_fn=collate_fn,
+        pin_memory=args.pin_mem
     )
     val_loader = create_loader(
         val_dataset,
@@ -47,9 +55,12 @@ def train(args):
         batch_size=args.batch_size,
         is_training=False,
         use_prefetcher=args.prefetcher,
-        interpolation=args.interpolation,
+        interpolation="bicubic",
+        mean=args.mean,
+        std=args.std,
         num_workers=args.workers,
-        distributed=False,
+        distributed=args.distributed,
+        crop_pct=args.crop_pct,
         pin_memory=args.pin_mem,
     )
 
@@ -92,7 +103,7 @@ def train(args):
             optimiser.step()
 
         # Validate and save best weights
-        top1_avg = eval(model, val_loader, args)
+        top1_avg, _ = eval(model, val_loader, args)
         best_metric, best_epoch = saver.save_checkpoint(epoch, metric=top1_avg)
         model.train()
 
@@ -112,7 +123,7 @@ def train(args):
 
 def eval(model, data_loader, args):
     top1 = AverageMeter()
-
+    inference_times = []
     model.eval()
 
     with torch.no_grad():
@@ -121,17 +132,22 @@ def eval(model, data_loader, args):
                 batch = batch.cuda()
                 targets = targets.cuda()
 
+            start = time.perf_counter()
             outputs = model(batch)
+            end = time.perf_counter()
+
             acc1, acc5 = accuracy(outputs, targets, topk=(1, 5))
+            inference_times.append(end - start)
 
             torch.cuda.synchronize()
             top1.update(acc1.item(), outputs.size(0))
 
-    return top1.avg
+    mean_time = sum(inference_times) / len(inference_times)
+    return top1.avg, mean_time
 
 
 def test(args):
-    model = create_resnet(args.num_classes, resnet18)
+    model = create_resnet(args.num_classes, resnet50, expansion=4)
 
     # Load checkpoint
     checkpoint = torch.load(args.checkpoint_path)
@@ -148,21 +164,25 @@ def test(args):
         batch_size=args.batch_size,
         is_training=False,
         use_prefetcher=args.prefetcher,
-        interpolation=args.interpolation,
+        interpolation="bicubic",
+        mean=args.mean,
+        std=args.std,
         num_workers=args.workers,
-        distributed=False,
+        distributed=args.distributed,
+        crop_pct=args.crop_pct,
         pin_memory=args.pin_mem,
     )
 
-    top1 = eval(model, test_loader, args)
+    top1, mean_time = eval(model, test_loader, args)
     print("Accuracy:", top1)
+    print("Mean inference time:", mean_time)
 
 
 if __name__ == "__main__":
     task = "train"
 
     if task == "train":
-        args = Namespace(data_dir="../data", epochs=300, output_dir="output/train/resnet34",
+        args = Namespace(data_dir="../data", epochs=300, output_dir="output/train/resnet50",
                          dataset="ImageFolder", train_split="train_split", test_split="val", prefetcher=True,
                          num_classes=15, gp=None, img_size=(3, 224, 224), input_size=None,
                          crop_pct=0.9, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225],
@@ -170,10 +190,10 @@ if __name__ == "__main__":
                          pin_mem=False, lr_warmup=0.01, lr=0.01, momentum=0.9, weight_decay=1e-4, checkpoint_hist=5)
         train(args)
     else:
-        args = Namespace(checkpoint_path="output/train/resnet18/model_best.pth.tar", data_dir="../data",
+        args = Namespace(checkpoint_path="output/train/resnet50/model_best.pth.tar", data_dir="../data",
                          dataset="ImageFolder", test_split="test", prefetcher=True,
                          num_classes=15, img_size=(3, 224, 224), input_size=None,
                          crop_pct=0.9, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225],
-                         interpolation="bicubic", batch_size=16, workers=4,
+                         interpolation="bicubic", batch_size=1, workers=4,
                          pin_mem=False)
         test(args)
