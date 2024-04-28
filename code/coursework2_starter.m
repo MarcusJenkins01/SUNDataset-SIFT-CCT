@@ -7,10 +7,11 @@
 %FEATURE = 'tiny image';
 %FEATURE = 'colour histogram';
 
-FEATURE = 'bag of sift';
-%FEATURE = 'spatial pyramids';
+%FEATURE = 'bag of sift';
+FEATURE = 'spatial pyramids';
 
-CLASSIFIER = 'nearest neighbor';
+%CLASSIFIER = 'nearest neighbor';
+CLASSIFIER = 'support vector machine';
 
 % Set up paths to VLFeat functions. 
 % See http://www.vlfeat.org/matlab/matlab.html for VLFeat Matlab documentation
@@ -92,9 +93,13 @@ switch lower(FEATURE)
             train_image_feats = get_bags_of_sifts(train_image_paths, 4, 4, 'lab'); %Allow for different sift parameters
             test_image_feats  = get_bags_of_sifts(test_image_paths, 4, 4, 'lab'); 
             save('image_feats.mat', 'train_image_feats', 'test_image_feats')
+        else
+            load('image_feats.mat', 'train_image_feats', 'test_image_feats')
         end
       case 'spatial pyramids'
           % YOU CODE spatial pyramids method
+          train_image_feats = get_spatial_pyramids(train_image_paths, 8, 2, 'lab'); %Allow for different sift parameters
+          test_image_feats  = get_spatial_pyramids(test_image_paths, 8, 2, 'lab'); 
 end
 %% Step 2: Classify each test image by training and using the appropriate classifier
 % Each function to classify test features will return an N x 1 cell array,

@@ -53,7 +53,7 @@ function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
         [locations, SIFT_features_channel] = vl_dsift(channel, 'Step', ...
             step, 'Size', bin_size, 'Fast');
 
-        locations
+        locations;
         
         % Concatenate the channel SIFT descriptors to form the full
         % descriptors for the image
