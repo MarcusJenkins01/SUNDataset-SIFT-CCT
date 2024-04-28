@@ -168,8 +168,6 @@ parser.add_argument('--decay-rate', '--dr', type=float, default=0.1, metavar='RA
                     help='LR decay rate (default: 0.1)')
 
 # Augmentation & regularization parameters
-parser.add_argument('--no-aug', action='store_true', default=False,
-                    help='Disable all training augmentation, override other train aug args')
 parser.add_argument('--scale', type=float, nargs='+', default=[0.08, 1.0], metavar='PCT',
                     help='Random resize scale (default: 0.08 1.0)')
 parser.add_argument('--ratio', type=float, nargs='+', default=[3. / 4., 4. / 3.], metavar='RATIO',
@@ -186,28 +184,6 @@ parser.add_argument('--aug-splits', type=int, default=0,
                     help='Number of augmentation splits (default: 0, valid: 0 or >=2)')
 parser.add_argument('--jsd', action='store_true', default=False,
                     help='Enable Jensen-Shannon Divergence + CE loss. Use with `--aug-splits`.')
-parser.add_argument('--reprob', type=float, default=0., metavar='PCT',
-                    help='Random erase prob (default: 0.)')
-parser.add_argument('--remode', type=str, default='const',
-                    help='Random erase mode (default: "const")')
-parser.add_argument('--recount', type=int, default=1,
-                    help='Random erase count (default: 1)')
-parser.add_argument('--resplit', action='store_true', default=False,
-                    help='Do not random erase first (clean) augmentation split')
-parser.add_argument('--mixup', type=float, default=0.0,
-                    help='mixup alpha, mixup enabled if > 0. (default: 0.)')
-parser.add_argument('--cutmix', type=float, default=0.0,
-                    help='cutmix alpha, cutmix enabled if > 0. (default: 0.)')
-parser.add_argument('--cutmix-minmax', type=float, nargs='+', default=None,
-                    help='cutmix min/max ratio, overrides alpha and enables cutmix if set (default: None)')
-parser.add_argument('--mixup-prob', type=float, default=1.0,
-                    help='Probability of performing mixup or cutmix when either/both is enabled')
-parser.add_argument('--mixup-switch-prob', type=float, default=0.5,
-                    help='Probability of switching to cutmix when both mixup and cutmix enabled')
-parser.add_argument('--mixup-mode', type=str, default='batch',
-                    help='How to apply mixup/cutmix params. Per "batch", "pair", or "elem"')
-parser.add_argument('--mixup-off-epoch', default=0, type=int, metavar='N',
-                    help='Turn off mixup after this epoch, disabled if 0 (default: 0)')
 parser.add_argument('--smoothing', type=float, default=0.1,
                     help='Label smoothing (default: 0.1)')
 parser.add_argument('--train-interpolation', type=str, default='random',
@@ -364,6 +340,10 @@ def main():
         bn_eps=args.bn_eps,
         scriptable=args.torchscript,
         checkpoint_path=args.initial_checkpoint)
+
+    param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(param_count, "parameters")
+
     if args.num_classes is None:
         assert hasattr(model, 'num_classes'), 'Model must have `num_classes` attr if not set on cmd line/config.'
         args.num_classes = model.num_classes  # FIXME handle model default vs config num_classes more elegantly
@@ -483,7 +463,8 @@ def main():
     # setup mixup / cutmix
     collate_fn = None
     mixup_fn = None
-    mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
+    # mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
+    mixup_active = False
     if mixup_active:
         mixup_args = dict(
             mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
@@ -501,26 +482,27 @@ def main():
 
     # create data loaders w/ augmentation pipeiine
     train_interpolation = args.train_interpolation
-    if args.no_aug or not train_interpolation:
+    if not train_interpolation:
         train_interpolation = data_config['interpolation']
+
     loader_train = create_loader(
         dataset_train,
         input_size=data_config['input_size'],
         batch_size=args.batch_size,
         is_training=True,
         use_prefetcher=args.prefetcher,
-        no_aug=args.no_aug,
-        re_prob=args.reprob,
-        re_mode=args.remode,
-        re_count=args.recount,
-        re_split=args.resplit,
-        scale=args.scale,
-        ratio=args.ratio,
-        hflip=args.hflip,
-        vflip=args.vflip,
-        color_jitter=args.color_jitter,
-        auto_augment=args.aa,
-        num_aug_splits=num_aug_splits,
+        no_aug=True,
+        # re_prob=args.reprob,
+        # re_mode=args.remode,
+        # re_count=args.recount,
+        # re_split=args.resplit,
+        # scale=args.scale,
+        # ratio=args.ratio,
+        # hflip=args.hflip,
+        # vflip=args.vflip,
+        # color_jitter=args.color_jitter,
+        # auto_augment=args.aa,
+        # num_aug_splits=num_aug_splits,
         interpolation=train_interpolation,
         mean=data_config['mean'],
         std=data_config['std'],

@@ -399,12 +399,12 @@ def cct_sun_192(pretrained=False, progress=False,
 
 @register_model
 def cct_sun_224_7(pretrained=True, progress=True, *args, **kwargs):
-    return cct_7_7x2_224_sine(num_classes=15, img_size=224, pretrained=False, progress=False)
+    return cct_7_7x2_224_sine(num_classes=15, img_size=224, pretrained=True, progress=True)
 
 
 @register_model
 def cct_sun_224_14(pretrained=True, progress=True, *args, **kwargs):
-    return cct_14_7x2_224(num_classes=15, img_size=224, pretrained=pretrained, progress=progress)
+    return cct_14_7x2_224(num_classes=15, img_size=224, pretrained=True, progress=True)
 
 
 class CCTResNet(nn.Module):
