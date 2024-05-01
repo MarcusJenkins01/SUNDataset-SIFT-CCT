@@ -1,0 +1,6 @@
+re_mixup,97.0
+re_mixup_hflip,97.33333333333333
+re_mixup_hflip_scale,96.66666666666667
+re_mixup_hflip_scale_color_jitter,96.33333333333333
+re_mixup_hflip_scale_color_jitter_ratio,96.33333333333333
+re_mixup_hflip_scale_color_jitter_ratio_aa,96.66666666666667
