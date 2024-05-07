@@ -1,4 +1,4 @@
-function SIFT_features = get_dsift_features(img, step, bin_size, color_space)
+function [SIFT_features, locations] = get_dsift_features(img, step, bin_size, color_space)
     % This function provides a modular method of computing the DSIFT
     % features for a given colour space
     
