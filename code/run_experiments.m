@@ -14,6 +14,7 @@ function experiments = run_experiments(FEATURE, sizes, interpolations, ...
             for preserve_aspect = preserve_aspects
                 for color_space = color_spaces
                     for norm = normalize
+                        tic
                         disp(experiment_number);
 
                         switch lower(FEATURE)    
@@ -33,6 +34,17 @@ function experiments = run_experiments(FEATURE, sizes, interpolations, ...
                                 test_image_feats  = get_colour_histograms ...
                                     (test_image_paths, size, ... 
                                     color_space, preserve_aspect);
+                            case 'spatial pyramids'
+                                % YOU CODE spatial pyramids method
+                                train_image_feats = get_spatial_pyramids(train_image_paths, size, preserve_aspect);
+                                test_image_feats  = get_spatial_pyramids(test_image_paths, size, preserve_aspect);
+                            case 'build_vocab'
+                                step_size = calculate_step_size(interpolation, preserve_aspect);
+                                vocab = build_vocabulary(train_image_paths, size, step_size, preserve_aspect, color_space);
+                                save('vocab.mat', 'vocab')
+
+                                train_image_feats = get_bags_of_sifts(train_image_paths, 8, 2, 'lab');
+                                test_image_feats  = get_bags_of_sifts(test_image_paths, 8, 2, 'lab'); 
                         end
 
                         % Store experiment results in corosponding column
@@ -46,6 +58,7 @@ function experiments = run_experiments(FEATURE, sizes, interpolations, ...
     
                         % Increase experiment number
                         experiment_number = experiment_number + 1;
+                        toc
                     end
                 end
             end

@@ -7,10 +7,11 @@
 %FEATURE = 'tiny image';
 %FEATURE = 'colour histogram';
 
-FEATURE = 'bag of sift';
-%FEATURE = 'spatial pyramids';
+%FEATURE = 'bag of sift';
+FEATURE = 'spatial pyramids';
 
-CLASSIFIER = 'nearest neighbor';
+%CLASSIFIER = 'nearest neighbor';
+CLASSIFIER = 'support vector machine';
 
 % Set up paths to VLFeat functions. 
 % See http://www.vlfeat.org/matlab/matlab.html for VLFeat Matlab documentation
@@ -83,18 +84,22 @@ switch lower(FEATURE)
         if ~exist('vocab.mat', 'file')
             fprintf('No existing dictionary found. Computing one from training images\n')
             vocab_size = 50; % you need to test the influence of this parameter
-            vocab = build_vocabulary(train_image_paths, vocab_size, 4, 4, 'lab'); %Also allow for different sift parameters
+            vocab = build_vocabulary(train_image_paths, vocab_size, 8, 2, 'lab'); %Also allow for different sift parameters
             save('vocab.mat', 'vocab')
         end
         
         % YOU CODE get_bags_of_sifts.m
         if ~exist('image_feats.mat', 'file')
-            train_image_feats = get_bags_of_sifts(train_image_paths, 4, 4, 'lab'); %Allow for different sift parameters
-            test_image_feats  = get_bags_of_sifts(test_image_paths, 4, 4, 'lab'); 
+            train_image_feats = get_bags_of_sifts(train_image_paths, 8, 2, 'lab'); %Allow for different sift parameters
+            test_image_feats  = get_bags_of_sifts(test_image_paths, 8, 2, 'lab'); 
             save('image_feats.mat', 'train_image_feats', 'test_image_feats')
+        else
+            load('image_feats.mat', 'train_image_feats', 'test_image_feats')
         end
       case 'spatial pyramids'
           % YOU CODE spatial pyramids method
+          train_image_feats = get_spatial_pyramids(train_image_paths);
+          test_image_feats  = get_spatial_pyramids(test_image_paths); 
 end
 %% Step 2: Classify each test image by training and using the appropriate classifier
 % Each function to classify test features will return an N x 1 cell array,
