@@ -14,13 +14,16 @@ from contextlib import suppress
 from argparse import Namespace
 from src import *
 import numpy as np
+import cv2
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 
 def test(args, amp_autocast=suppress):
-    abbr_labels = ['Kit', 'Sto', 'Bed', 'Liv', 'Hou', 'Ind', 'Sta',
-                   'Und', 'Bld', 'Str', 'HW', 'Fld', 'Cst', 'Mnt', 'For']
+    # abbr_labels = ['Kit', 'Sto', 'Bed', 'Liv', 'Hou', 'Ind', 'Sta',
+    #                'Und', 'Bld', 'Str', 'HW', 'Fld', 'Cst', 'Mnt', 'For']
+    abbr_labels = ['Bed', 'Cst', 'Fld', 'For', 'HW', 'Hou', 'Ind',
+                   'Kit', 'Liv', 'Mnt', 'Sta', 'Sto', 'Str', 'Bld', 'Und']
 
     dataset_eval = create_dataset(
         args.dataset, root=args.data_dir, split=args.test_split, is_training=False, batch_size=args.batch_size)
@@ -85,6 +88,17 @@ def test(args, amp_autocast=suppress):
             y_pred.extend(class_max.detach().cpu().tolist())
             y_true.extend(targets.detach().cpu().tolist())
 
+            # Debugging
+            # for i, img in enumerate(inputs):
+            #     np_img = img.detach().cpu().numpy()
+            #     cv2_img = np.transpose(np_img, (1, 2, 0))
+            #     cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+            #     print(y_pred[i])
+            #
+            #     cv2.imshow("Image", cv2_img)
+            #     cv2.waitKey(0)
+            #     cv2.destroyAllWindows()
+
     y_pred = np.array(y_pred)
     y_true = np.array(y_true)
     mean_time = sum(inference_times) / len(inference_times)
@@ -101,7 +115,7 @@ def test(args, amp_autocast=suppress):
 
 if __name__ == "__main__":
     args = Namespace(data_dir='../data',
-                     checkpoint_path='output/train/cct_224_14_trial_re_6/model_best.pth.tar',
+                     checkpoint_path='../../output/train/cct_224_14_trial_re_6/model_best.pth.tar',
                      dataset='ImageFolder', test_split='test', model='cct_sun_224_14', prefetcher=True,
                      num_classes=15, gp=None, img_size=(3, 224, 224), input_size=224,
                      crop_pct=0.9, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225],
