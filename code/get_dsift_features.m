@@ -56,7 +56,6 @@ function [SIFT_features, locations] = get_dsift_features(img, step, bin_size, co
         img_gray = single(rgb2gray(img));
         [locations, SIFT_features_img] = vl_dsift(img_gray, 'Step', ...
                 step, 'Size', bin_size, 'Fast');
-        locations = locations';
 
         % Extend the array to accept a colour histogram
         sift_descriptor_size = size(SIFT_features_img, 1);
@@ -115,7 +114,7 @@ function [SIFT_features, locations] = get_dsift_features(img, step, bin_size, co
             channel = single(img(:, :, ch));
             
             % Compute dense SIFT descriptors for the current channel
-            [~, SIFT_features_channel] = vl_dsift(channel, 'Step', ...
+            [locations, SIFT_features_channel] = vl_dsift(channel, 'Step', ...
                 step, 'Size', bin_size, 'Fast');
 
             % Concatenate the channel SIFT descriptors to form the full
