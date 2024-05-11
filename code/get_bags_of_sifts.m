@@ -2,7 +2,7 @@
 % University 
 % Michal Mackiewicz, UEA
 
-function image_feats = get_bags_of_sifts(image_paths, step, bin_size, color_space)
+function image_feats = get_bags_of_sifts(image_paths, step, bin_size, color_space, color_hist)
     % image_paths is an N x 1 cell array of strings where each string is an
     % image path on the file system.
     
@@ -46,7 +46,7 @@ function image_feats = get_bags_of_sifts(image_paths, step, bin_size, color_spac
         
         % Use our get_dsift_features function to get the SIFT descriptors
         % for a given set of parameters
-        SIFT_features = get_dsift_features(img, step, bin_size, color_space);
+        SIFT_features = get_dsift_features(img, step, bin_size, color_space, color_hist);
         
         % Compute the distance matrix of each DSIFT descriptor to each
         % visual word in the vocabulary

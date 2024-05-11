@@ -101,7 +101,7 @@ def test(args, amp_autocast=suppress):
 
 if __name__ == "__main__":
     args = Namespace(data_dir='../data',
-                     checkpoint_path='output/train/cct_sun_224_14_no_aug/model_best.pth.tar',
+                     checkpoint_path='output/train/cct_224_14_trial_re_6/model_best.pth.tar',
                      dataset='ImageFolder', test_split='test', model='cct_sun_224_14', prefetcher=True,
                      num_classes=15, gp=None, img_size=(3, 224, 224), input_size=224,
                      crop_pct=0.9, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225],

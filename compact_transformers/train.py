@@ -307,9 +307,32 @@ def _parse_args():
 
 def main():
     setup_default_logging()
-    args, args_text = _parse_args()
-    print(args)
-    exit(0)
+    # args, args_text = _parse_args()
+
+    args = argparse.Namespace(data_dir='C:/Users/marcu/Documents/Year 3/Computer Vision/Coursework 2/data',
+                              dataset='ImageFolder', train_split='train_split', val_split='val', model='cct_sun_224_14',
+                              pretrained=False, initial_checkpoint='', resume='', no_resume_opt=False, num_classes=15,
+                              gp=None, img_size=224, input_size=None, crop_pct=0.9, mean=[0.485, 0.456, 0.406],
+                              std=[0.229, 0.224, 0.225], interpolation='bicubic', batch_size=16,
+                              validation_batch_size_multiplier=1, opt='adamw', opt_eps=None, opt_betas=None,
+                              momentum=0.9, weight_decay=0.005, clip_grad=None, clip_mode='norm', sched='cosine',
+                              lr=0.00005, lr_noise=None, lr_noise_pct=0.67, lr_noise_std=1.0, lr_cycle_mul=1.0,
+                              lr_cycle_limit=1, warmup_lr=1e-07, min_lr=1e-06, epochs=300, epoch_repeats=0.0,
+                              start_epoch=None, decay_epochs=30, warmup_epochs=25, cooldown_epochs=10,
+                              patience_epochs=10, decay_rate=0.1, no_aug=False, scale=None,
+                              ratio=None, hflip=0.0, vflip=0.0, color_jitter=0,
+                              aa=None, aug_splits=0, jsd=False, reprob=0.125, remode='const', recount=1,
+                              resplit=False, mixup=0, cutmix=0, cutmix_minmax=None, mixup_prob=0.0,
+                              mixup_switch_prob=0.5,
+                              mixup_mode='batch', mixup_off_epoch=0, smoothing=0.1, train_interpolation='random',
+                              drop=0.0, drop_connect=None, drop_path=None, drop_block=None, bn_tf=False,
+                              bn_momentum=None, bn_eps=None, sync_bn=False, dist_bn='', split_bn=False, model_ema=False,
+                              model_ema_force_cpu=False, model_ema_decay=0.9998, seed=42, log_interval=50,
+                              recovery_interval=0, checkpoint_hist=2, workers=4, save_images=False, amp=True,
+                              apex_amp=False, native_amp=False, channels_last=False, pin_mem=False, no_prefetcher=False,
+                              output='', experiment='', eval_metric='top1', tta=0, local_rank=0,
+                              use_multi_epochs_loader=False, torchscript=False, log_wandb=False)
+    args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
 
     if args.log_wandb:
         if has_wandb:
@@ -492,8 +515,7 @@ def main():
     # setup mixup / cutmix
     collate_fn = None
     mixup_fn = None
-    # mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
-    mixup_active = False
+    mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
     if mixup_active:
         mixup_args = dict(
             mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
@@ -520,18 +542,18 @@ def main():
         batch_size=args.batch_size,
         is_training=True,
         use_prefetcher=args.prefetcher,
-        no_aug=True,
-        # re_prob=args.reprob,
-        # re_mode=args.remode,
-        # re_count=args.recount,
-        # re_split=args.resplit,
-        # scale=args.scale,
-        # ratio=args.ratio,
-        # hflip=args.hflip,
-        # vflip=args.vflip,
-        # color_jitter=args.color_jitter,
-        # auto_augment=args.aa,
-        # num_aug_splits=num_aug_splits,
+        no_aug=args.no_aug,
+        re_prob=args.reprob,
+        re_mode=args.remode,
+        re_count=args.recount,
+        re_split=args.resplit,
+        scale=args.scale,
+        ratio=args.ratio,
+        hflip=args.hflip,
+        vflip=args.vflip,
+        color_jitter=args.color_jitter,
+        auto_augment=args.aa,
+        num_aug_splits=num_aug_splits,
         interpolation=train_interpolation,
         mean=data_config['mean'],
         std=data_config['std'],
@@ -750,7 +772,6 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
     losses_m = AverageMeter()
     top1_m = AverageMeter()
     top5_m = AverageMeter()
-    print(args)
 
     model.eval()
 
@@ -810,9 +831,9 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
     return metrics
 
 
-def run_trial(args, trial):
-    setup_default_logging()
+def run_trial(args, trial=None):
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
+    print(args_text)
 
     if args.log_wandb:
         if has_wandb:
@@ -1131,7 +1152,10 @@ def run_trial(args, trial):
                     write_header=best_metric is None, log_wandb=args.log_wandb and has_wandb)
 
             save_metric = eval_metrics[eval_metric]
-            trial.report(save_metric, epoch)
+
+            if trial is not None:
+                trial.report(save_metric, epoch)
+
             if saver is not None:
                 # save proper checkpoint with eval metric
                 best_metric, best_epoch = saver.save_checkpoint(epoch, metric=save_metric)
@@ -1145,44 +1169,47 @@ def run_trial(args, trial):
 
 
 def cct_tune_augmentation():
+    setup_default_logging()
     search_spaces = {
         "mixup": {
-            "mixup": [0.8, 0.2, 0.4],
-        },
-        "cutmix": {
-            "cutmix": [1.0, 0.5, 0.75],
+            "mixup": [0.8, 0.5, 0.9],
+            "mixup_prob": [1.0, 0.5, 0.75],
+            "cutmix": [1.0, 0.5, 0.0],
         },
         "re": {
             "reprob": [0.25, 0.125, 0.5],
+            "remode": ["pixel", "const", "rand"],
         },
         "scale": {
             "min_scale": [0.08, 0.16, 0.32],
         },
         "ratio": {
-            "ratio": [[0.75, 1.3333333333333333]],
+            "ratio_min": [0.75],
+            "ratio_max": [1.3333333333333333],
         },
         "hflip": {
             "hflip": [0.5, 0.25, 0.75],
         },
         "color_jitter": {
-            "color_jitter": [0.4, 0.2, 0.8]
+            "color_jitter": [0.4, 0.2, 0.8],
         },
         "aa": {
-            "aa": ["rand-m9-mstd0.5-inc1"]
+            "aa": ["rand-m9-mstd0.5-inc1"],
         }
     }
 
-    for method in ["mixup", "cutmix", "re", "scale", "ratio", "hflip", "color_jitter", "aa"]:
+    #for method in ["mixup", "re", "scale", "ratio", "hflip", "color_jitter", "aa"]:
+    for method in ["mixup", "color_jitter"]:
         storage_name = f"sqlite:///cct_sun_224_14_trial_{method}.db"
         search_space = search_spaces[method]
         study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space),
                                     storage=storage_name, direction="maximize",
-                                    pruner=None)
+                                    pruner=None, load_if_exists=True, study_name="no-name-3e21f95f-7d39-475f-83c7-50b993d2aee1")
 
-        n_trials = 0
+        n_trials = 1
         for _, v in search_space.items():
-            n_trials += len(v)
-        print(n_trials)
+            n_trials *= len(v)
+        print("n_trials", n_trials)
 
         study.optimize(lambda trial: hpo_objective_augmentation(trial, method), n_trials=n_trials)
 
@@ -1194,14 +1221,14 @@ def hpo_objective_augmentation(trial, method):
                               gp=None, img_size=224, input_size=None, crop_pct=0.9, mean=[0.485, 0.456, 0.406],
                               std=[0.229, 0.224, 0.225], interpolation='bicubic', batch_size=16,
                               validation_batch_size_multiplier=1, opt='adamw', opt_eps=None, opt_betas=None,
-                              momentum=0.9, weight_decay=0.05, clip_grad=None, clip_mode='norm', sched='cosine',
-                              lr=0.0005, lr_noise=None, lr_noise_pct=0.67, lr_noise_std=1.0, lr_cycle_mul=1.0,
-                              lr_cycle_limit=1, warmup_lr=1e-06, min_lr=1e-05, epochs=300, epoch_repeats=0.0,
+                              momentum=0.9, weight_decay=0.005, clip_grad=None, clip_mode='norm', sched='cosine',
+                              lr=0.00005, lr_noise=None, lr_noise_pct=0.67, lr_noise_std=1.0, lr_cycle_mul=1.0,
+                              lr_cycle_limit=1, warmup_lr=1e-07, min_lr=1e-06, epochs=300, epoch_repeats=0.0,
                               start_epoch=None, decay_epochs=30, warmup_epochs=25, cooldown_epochs=10,
                               patience_epochs=10, decay_rate=0.1, no_aug=False, scale=None,
                               ratio=None, hflip=0.0, vflip=0.0, color_jitter=0,
                               aa=None, aug_splits=0, jsd=False, reprob=0, remode='pixel', recount=1,
-                              resplit=False, mixup=0, cutmix=0, cutmix_minmax=None, mixup_prob=1.0, mixup_switch_prob=0.5,
+                              resplit=False, mixup=0, cutmix=0, cutmix_minmax=None, mixup_prob=0.0, mixup_switch_prob=0.5,
                               mixup_mode='batch', mixup_off_epoch=0, smoothing=0.1, train_interpolation='random',
                               drop=0.0, drop_connect=None, drop_path=None, drop_block=None, bn_tf=False,
                               bn_momentum=None, bn_eps=None, sync_bn=False, dist_bn='', split_bn=False, model_ema=False,
@@ -1212,20 +1239,26 @@ def hpo_objective_augmentation(trial, method):
                               use_multi_epochs_loader=False, torchscript=False, log_wandb=False)
 
     if method == "mixup":
-        args.mixup = trial.suggest_float("mixup", 0, 0.8)
-        print("mixup", args.mixup)
-    elif method == "cutmix":
+        args.mixup = trial.suggest_float("mixup", 0.5, 0.9)
+        args.mixup_prob = trial.suggest_float("mixup_prob", 0.5, 1.0)
         args.cutmix = trial.suggest_float("cutmix", 0, 1.0)
+        args.checkpoint_hist = 1
+        print("mixup", args.mixup)
+        print("mixup_prob", args.mixup_prob)
         print("cutmix", args.cutmix)
     elif method == "re":
         args.reprob = trial.suggest_float("reprob", 0, 0.5)
+        args.remode = trial.suggest_categorical("remode", ["pixel", "const", "rand"])
         print("reprob", args.reprob)
+        print("remode", args.remode)
     elif method == "scale":
         min_scale = trial.suggest_float("min_scale", 0.08, 0.32)
         args.scale = [min_scale, 1.0]
         print("scale", args.scale)
     elif method == "ratio":
-        args.ratio = trial.suggest_categorical("ratio", [0.75, 1.3333333333333333])
+        ratio_min = trial.suggest_float("ratio_min", 0.5, 1.0)
+        ratio_max = trial.suggest_float("ratio_max", 1.0, 1.5)
+        args.ratio = [ratio_min, ratio_max]
         print("ratio", args.ratio)
     elif method == "hflip":
         args.hflip = trial.suggest_float("hflip", 0, 0.75)
@@ -1244,10 +1277,89 @@ def hpo_objective_augmentation(trial, method):
     return best_metric
 
 
-if __name__ == '__main__':
-    mode = "augmentation"
+def trial_methods():
+    setup_default_logging()
+    DEFAULT_ARGS = argparse.Namespace(data_dir='C:/Users/marcu/Documents/Year 3/Computer Vision/Coursework 2/data',
+                              dataset='ImageFolder', train_split='train_split', val_split='val', model='cct_sun_224_14',
+                              pretrained=False, initial_checkpoint='', resume='', no_resume_opt=False, num_classes=15,
+                              gp=None, img_size=224, input_size=None, crop_pct=0.9, mean=[0.485, 0.456, 0.406],
+                              std=[0.229, 0.224, 0.225], interpolation='bicubic', batch_size=16,
+                              validation_batch_size_multiplier=1, opt='adamw', opt_eps=None, opt_betas=None,
+                              momentum=0.9, weight_decay=0.005, clip_grad=None, clip_mode='norm', sched='cosine',
+                              lr=0.00005, lr_noise=None, lr_noise_pct=0.67, lr_noise_std=1.0, lr_cycle_mul=1.0,
+                              lr_cycle_limit=1, warmup_lr=1e-07, min_lr=1e-06, epochs=300, epoch_repeats=0.0,
+                              start_epoch=None, decay_epochs=30, warmup_epochs=25, cooldown_epochs=10,
+                              patience_epochs=10, decay_rate=0.1, no_aug=False, scale=None,
+                              ratio=None, hflip=0.0, vflip=0.0, color_jitter=0,
+                              aa=None, aug_splits=0, jsd=False, reprob=0, remode='pixel', recount=1,
+                              resplit=False, mixup=0, cutmix=0, cutmix_minmax=None, mixup_prob=0.0,
+                              mixup_switch_prob=0.5,
+                              mixup_mode='batch', mixup_off_epoch=0, smoothing=0.1, train_interpolation='random',
+                              drop=0.0, drop_connect=None, drop_path=None, drop_block=None, bn_tf=False,
+                              bn_momentum=None, bn_eps=None, sync_bn=False, dist_bn='', split_bn=False, model_ema=False,
+                              model_ema_force_cpu=False, model_ema_decay=0.9998, seed=42, log_interval=50,
+                              recovery_interval=0, checkpoint_hist=2, workers=4, save_images=False, amp=True,
+                              apex_amp=False, native_amp=False, channels_last=False, pin_mem=False, no_prefetcher=False,
+                              output='', experiment='', eval_metric='top1', tta=0, local_rank=0,
+                              use_multi_epochs_loader=False, torchscript=False, log_wandb=False)
+
+    method_params = {
+        "re": {
+            "reprob": 0.125,
+            "remode": "const",
+        },
+        "mixup": {
+            "mixup": 0.8,
+            "mixup_prob": 1.0,
+            "cutmix": 0.5,
+        },
+        "color_jitter": {
+            "color_jitter": 0.2,
+        },
+        "hflip": {
+            "hflip": 0.25,
+        },
+        "aa": {
+            "aa": "rand-m9-mstd0.5-inc1",
+        },
+        "scale": {
+            "scale": [0.32, 1.0],
+        },
+        "ratio": {
+            "ratio": [0.75, 1.3333333333333333],
+        },
+    }
+    method_order = ["re", "mixup", "hflip", "scale", "color_jitter", "ratio", "aa"]
+
+    with open("augmentation_outputs_2.csv", "a") as f_out:
+        # Trial each method alongside re to start with
+        for i in range(1, len(method_order)):
+            args = DEFAULT_ARGS
+
+            # Apply first method
+            for param, value in method_params[method_order[0]].items():
+                setattr(args, param, value)
+
+            next_method = method_order[i]
+            method_names = f"{method_order[0]}_{next_method}"
+            args.experiment = f"cct_224_14_trial_{method_names}"
+            args.epochs = 30
+
+            # Map the parameter values to the args namespace for the method
+            for param, value in method_params[next_method].items():
+                setattr(args, param, value)
+
+            best_metric = run_trial(args)
+            print(method_names, best_metric)
+            f_out.write(f"{method_names},{best_metric}\n")
+
+
+if __name__ == "__main__":
+    mode = "train"
 
     if mode == "train":
         main()
     elif mode == "augmentation":
         cct_tune_augmentation()
+    elif mode == "augmentation_methods":
+        trial_methods()
