@@ -1,0 +1,3 @@
+Scott Gurney for the implementation of spatial pyramids and linear SVM, the experimentation framework, and hyperparameter tuning for: DSIFT, DSIFT + colour, spatial pyramids, spatial pyramids + colour, and linear SVM.
+
+Marcus Jenkins for the implementation of DSIFT, DSIFT colour features, CCT, ResNets, evaluation framework for ResNet and CCT, and the hyperparameter optimisation and data augmentation methods for CCT.
