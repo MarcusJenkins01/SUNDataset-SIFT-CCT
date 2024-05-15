@@ -70,7 +70,7 @@ plot_confusion_matrix(confusion_matrix, categories, abbr_categories, "final_pyrm
 %% Plot
 
 x = [1,2,3,4,5,6,7,8];
-y = [bag_sift_col_knn_accuracy, bag_sift_grey_knn_accuracy, bag_sift_col_svm_accuracy, bag_sift_grey_svm_accuracy, pyramids_col_knn_accuracy, pyramids_grey_knn_accuracy, pyramids_col_svm_accuracy, pyramids_grey_svm_accuracy];
+y = [bag_sift_col_knn_accuracy, bag_sift_grey_knn_accuracy; bag_sift_col_svm_accuracy, bag_sift_grey_svm_accuracy; pyramids_col_knn_accuracy pyramids_grey_knn_accuracy; pyramids_col_svm_accuracy, pyramids_grey_svm_accuracy];
 
 x_labels = {"SIFT KNN"; "SIFT SVM"; "Pyramid KNN"; "Pyramid SVM"};
 
@@ -80,11 +80,14 @@ bar(y);
 newcolors = [0 0.5 1; 0.7 0.7 0.7];
 colororder(newcolors)
 
+legend("Colour", "Greyscale", 'Location', 'best');
+
 xlabel("Feature and Classifier");
 ylabel(" Accuracy %");
 title("Optimum Paramter Results");
 
 xticklabels(x_labels);
+ylim([0.50 0.70]);
 
 % Save graph within plots folder
 filename = fullfile("../plots/", "summary_plot.png");
