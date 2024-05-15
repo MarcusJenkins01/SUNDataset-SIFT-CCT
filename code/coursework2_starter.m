@@ -7,11 +7,11 @@
 %FEATURE = 'tiny image';
 %FEATURE = 'colour histogram';
 
-%FEATURE = 'bag of sift';
-FEATURE = 'spatial pyramids';
+FEATURE = 'bag of sift';
+%FEATURE = 'spatial pyramids';
 
-%CLASSIFIER = 'nearest neighbor';
-CLASSIFIER = 'support vector machine';
+CLASSIFIER = 'nearest neighbor';
+%CLASSIFIER = 'support vector machine';
 
 % Set up paths to VLFeat functions. 
 % See http://www.vlfeat.org/matlab/matlab.html for VLFeat Matlab documentation
@@ -83,8 +83,7 @@ switch lower(FEATURE)
         % YOU CODE build_vocabulary.m
         if ~exist('vocab.mat', 'file')
             fprintf('No existing dictionary found. Computing one from training images\n')
-            vocab_size = 50; % you need to test the influence of this parameter
-            vocab = build_vocabulary(train_image_paths, vocab_size, 8, 2, 'lab'); %Also allow for different sift parameters
+            vocab = build_vocabulary(train_image_paths); %Also allow for different sift parameters
             save('vocab.mat', 'vocab')
         end
         
@@ -132,7 +131,12 @@ switch lower(CLASSIFIER)
     % predicted_categories is an M x 1 cell array, where each entry is a string
     %  indicating the predicted category for each test image.
     % Useful functions: pdist2 (Matlab) and vl_alldist2 (from vlFeat toolbox)
-        predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats, 9, 'standard');
+    switch lower(FEATURE)
+        case 'bag of sift'
+            predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats, 11, 'standard', 'manhattan');
+        otherwise
+            predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats, 9, 'standard');
+    end
     case 'support vector machine'
         predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats);
 end

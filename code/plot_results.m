@@ -1,5 +1,5 @@
 function plot_results(test_type, test_parameter, results, x_label, ...
-    subtitle_text, subtitle_values, dual_plot, comparison_parameter, filename)
+    subtitle_text, subtitle_values, dual_plot, comparison_parameter, filename, filename_end)
     x = 1:length(test_parameter);
     
     figure
@@ -26,12 +26,49 @@ function plot_results(test_type, test_parameter, results, x_label, ...
 
             % Find x-axis index of max accuracy
             [~, max_idx] = max(y);
+        elseif test_type == "SVM"
+            y1 = results(4, 1);
+            y2 = results(5, 1);
+            y = [y1{1}, y2{1}];
+
+            % If second result empty, split first result in half
+            if isempty(y2{1})
+                y2{1} = y1{1}(1:2:end);
+                y1{1} = y1{1}(2:2:end);
+            end
+    
+            plot(x, y1{1}, 'LineWidth', 2);
+            hold on
+    
+            plot(x, y2{1}, 'LineWidth', 2);
+            hold off
+
+            % Find x-axis index of max accuracy
+            [~, max_idx] = max(y);
 
         else
-            % Calculate split posistion and split results for dual plots
             split_size = length([results{4, :}]) / 2;
-            y1 = [results{4, 1:split_size}];
-            y2 = [results{4, split_size + 1:end}];
+
+            if test_type == "build_vocab_odd_split"
+                % Split every other reults for dual plots
+                y1 = [results{4, 1:2:end}];
+                y2 = [results{4, 2:2:end}];
+				test_type = "Build Vocab";
+            elseif test_type == "bag_sift_odd_split"
+                % Split every other reults for dual plots
+                y1 = [results{4, 1:2:end}];
+                y2 = [results{4, 2:2:end}];
+                test_type = "Bag of Sift";
+            elseif test_type == "bag_sift_split"
+                % Calculate split posistion and split results for dual plots
+                y1 = [results{4, 1:split_size}];
+                y2 = [results{4, split_size + 1:end}];
+                test_type = "Bag of Sift";
+            else
+                % Calculate split posistion and split results for dual plots
+                y1 = [results{4, 1:split_size}];
+                y2 = [results{4, split_size + 1:end}];
+            end
             y = [results{4, :}];
             
             plot(x, y1, 'LineWidth', 2);
@@ -56,6 +93,9 @@ function plot_results(test_type, test_parameter, results, x_label, ...
         if test_type == "classifier"
             % Convert cells to array
             y = cell2mat(results(4:end, 1));
+        elseif test_type == "bag_sift_odd_split"
+            y = [results{4, :}];
+            test_type = "Bag of Sift";
         else
             y = [results{4, :}];
         end
@@ -82,6 +122,8 @@ function plot_results(test_type, test_parameter, results, x_label, ...
     % Add label to the vertical line
     label_text = sprintf('%.1f%%', max(y)*100);
     text(max_idx*1.05, max(y), label_text, 'Color', 'r');
+
+    filename = strcat(filename, filename_end);
       
     % Check filename has correct file extension
     if ~endsWith(filename, '.png')

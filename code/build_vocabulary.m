@@ -3,18 +3,41 @@
 %This function will sample SIFT descriptors from the training images,
 %cluster them with kmeans, and then return the cluster centers.
 
-function vocab = build_vocabulary(image_paths, vocab_size, step, bin_size, color_space, color_hist)
+function vocab = build_vocabulary(image_paths, vocab_size, step_size, num_of_bins, color_space)
     % The inputs are images, a N x 1 cell array of image paths and the size of 
     % the vocabulary.
     
     % The output 'vocab' should be vocab_size x 128. Each row is a cluster
     % centroid / visual word.
     
-    % Default will be grayscale
+    % Use optimal if color space is not given or invalid value
     if nargin < 5
-        color_space = 'grayscale';
+        fprintf("Color space not specified, using optimal: 'lab'\n");
+        color_space = 'lab';
+    elseif ~any(strcmp({'grayscale', 'rgb', 'opponent', 'rg', 'lab'}, color_space))
+        fprintf("Invalid color space specified, using optimal: 'lab'\n");
+        color_space = 'lab';
+    end
+
+    % Use optimal if num_of_bins is not given
+    if nargin < 4
+        fprintf("Number of bins not specified, using optimal: '4'\n");
+        num_of_bins = 4;
+    end
+
+    % Use optimal if step_size is not given
+    if nargin < 3
+        fprintf("Step size not specified, using optimal: '50'\n");
+        step_size = 50;
+    end
+
+    % Use optimal if vocab_size is not given
+    if nargin < 2
+        fprintf("Vocabulary size not specified, using optimal: '150'\n");
+        vocab_size = 150;
     end
     
+    step_size = calculate_step_size(step_size, num_of_bins);
     all_SIFT_features = [];
     N = length(image_paths);
     
@@ -26,7 +49,7 @@ function vocab = build_vocabulary(image_paths, vocab_size, step, bin_size, color
         
         % Use our get_dsift_features function to get the SIFT descriptors
         % for a given set of parameters
-        SIFT_features = get_dsift_features(img, step, bin_size, color_space, color_hist);
+        SIFT_features = get_dsift_features(img, step_size, num_of_bins, color_space);
 
         % Concatenate the image SIFT features to form the full vocabulary 
         % to be clustered by k-means

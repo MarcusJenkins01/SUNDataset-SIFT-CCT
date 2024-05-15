@@ -1,4 +1,4 @@
-function image_feats = get_spatial_pyramids(image_paths, depth_of_pyramid, normalize)
+function image_feats = get_spatial_pyramids(image_paths, depth_of_pyramid, normalize, color_space)
 
     % Use optimal normalize if not given or is invalid
     if nargin < 3
@@ -12,7 +12,7 @@ function image_feats = get_spatial_pyramids(image_paths, depth_of_pyramid, norma
     % Use optimal depth of pyramid if not given or is invalid
     if nargin < 2
         fprintf("Depth of pyramid not specified, using optimal value: 2\n");
-        depth_of_pyramid = 5;
+        depth_of_pyramid = 2;
     end
 
 
@@ -45,7 +45,7 @@ function image_feats = get_spatial_pyramids(image_paths, depth_of_pyramid, norma
 
         % Use our get_dsift_features function to get the SIFT
         % descriptors and their location for the image
-        [SIFT_features, locations] = get_dsift_features(img, 8, 2, 'lab');
+        [SIFT_features, locations] = get_dsift_features(img, 2, 2, color_space);
         
         % Compute the distance matrix of each DSIFT descriptor
         % to each visual word in the vocabulary

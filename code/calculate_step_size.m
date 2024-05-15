@@ -6,7 +6,7 @@ function step_size = calculate_step_size(value_number, bin_size)
         case {25, 0.25}
             step_size = window_size * 0.25;
         case {50, 0.5}
-            step_size = window_size * 0.55;
+            step_size = window_size * 0.50;
         case {75, 0.75}
             step_size = window_size * 0.75;
         case {100, 1}

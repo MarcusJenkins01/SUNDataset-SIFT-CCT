@@ -7,7 +7,7 @@
 %margin, is W*X + B where '*' is the inner product or dot product and W and
 %B are the learned hyperplane parameters. 
 
-function predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats)
+function predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats, crossVal, normalise, transform_func, box_constraint, kernal_scale)
 % image_feats is an N x d matrix, where d is the dimensionality of the
 %  feature representation.
 % train_labels is an N x 1 cell array, where each entry is a string
@@ -33,8 +33,8 @@ for idx = 1:num_categories
     % Create temporary binary class labels
     temp_labels=strcmp(train_labels,categories(idx)); % Create binary classes for each classifier
     % Save model by category index
-    SVMModels{idx}=fitcsvm(train_image_feats,temp_labels,'Standardize',true,...
-        'KernelFunction','linear');
+    SVMModels{idx}=fitcsvm(train_image_feats,temp_labels,'Standardize',normalise,...
+        'KernelFunction','linear','ScoreTransform',transform_func,'Crossval',crossVal,'BoxConstraint',box_constraint,'KernelScale',kernal_scale);
 end
 
 % Size of test set
@@ -45,9 +45,13 @@ Scores=zeros(num_test,num_categories);
 
 % Test for each category
 for idx=1:num_categories
-    % Predict and record score only
-    [~,score]=predict(SVMModels{idx},test_image_feats);
-
+    if strcmpi(crossVal, 'on')       
+        % Make predictions on test data
+        [~, score] = kfoldPredict(SVMModels{idx});
+    else
+        % Predict and record score only
+        [~,score]=predict(SVMModels{idx},test_image_feats);
+    end
     % Save score by category index
     % Second column contains positive-class scores
     Scores(:,idx)=score(:,2);

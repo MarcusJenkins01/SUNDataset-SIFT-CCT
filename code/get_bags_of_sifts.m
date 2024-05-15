@@ -22,6 +22,11 @@ function image_feats = get_bags_of_sifts(image_paths, step, bin_size, color_spac
     % Don't forget to normalize the histogram, or else a larger image with more
     % SIFT features will look very different from a smaller version of the same
     % image.
+	
+	% Default colour histograms will be false
+    if nargin < 5
+        color_hist = false;
+    end
     
     % Default colour space will be grayscale
     if nargin < 4

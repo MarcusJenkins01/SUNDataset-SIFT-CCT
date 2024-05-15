@@ -8,14 +8,14 @@ function [quantisation, color_spaces, proportions, interpolations, normalize] ..
     second = strtrim(second);
 
     % Update parameter(s) based on best results
-    if best(1) == "build_vocab"
+    if best(1) == "build_vocab" || best(1) == "bag_of_sift" || best(1) == "bag_of_sift_col"
         proportions = [str2double(best(2))];
     else
         proportions = [strcmp(best(2), 'true')];
     end
     color_spaces = [best(3)];
     quantisation = [str2double(best(4))];
-    if best(1) == "build_vocab"
+    if best(1) == "build_vocab" || best(1) == "bag_of_sift" || best(1) == "bag_of_sift_col"
         interpolations = [str2double(best(5))];
     else
         interpolations = [best(5)];
@@ -23,9 +23,9 @@ function [quantisation, color_spaces, proportions, interpolations, normalize] ..
     normalize = [strcmp(best(6), 'true')];
     
     % Only add second parameter(s) if unique
-    if second(1) == "build_vocab" && ~ismember(proportions, str2double(second(2)))
+    if (second(1) == "build_vocab" || second(1) == "bag_of_sift" || second(1) == "bag_of_sift_col") && ~ismember(proportions, str2double(second(2)))
         proportions = [proportions, str2double(second(2))];
-    elseif second(1) ~= "build_vocab" && ~ismember(proportions, strcmp(second(2), 'true'))
+    elseif (second(1) ~= "build_vocab" && second(1) ~= "bag_of_sift" && second(1) ~= "bag_of_sift_col") && ~ismember(proportions, strcmp(second(2), 'true'))
         proportions = [proportions, strcmp(second(2), 'true')];
     end
 
@@ -35,9 +35,9 @@ function [quantisation, color_spaces, proportions, interpolations, normalize] ..
     if ~ismember(quantisation, str2double(second(4)))
         quantisation = [quantisation, str2double(second(4))];
     end
-    if second(1) == "build_vocab" && ~ismember(interpolations, str2double(second(5)))
+    if (second(1) == "build_vocab" || second(1) == "bag_of_sift" || second(1) == "bag_of_sift_col") && ~ismember(interpolations, str2double(second(5)))
         interpolations = [interpolations, str2double(second(5))];
-    elseif second(1) ~= "build_vocab" && ~ismember(interpolations, second(5))
+    elseif (second(1) ~= "build_vocab" && second(1) ~= "bag_of_sift" && second(1) ~= "bag_of_sift_col") && ~ismember(interpolations, second(5))
         interpolations = [interpolations, second(5)];
     end
     if ~ismember(normalize, strcmp(second(6), 'true'))

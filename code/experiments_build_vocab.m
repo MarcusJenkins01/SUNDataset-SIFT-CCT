@@ -15,7 +15,7 @@ num_train_per_cat = 100;
     get_image_paths(data_path, categories, num_train_per_cat);
 
 % Set all parameters to default values
-vocab_size = 50;
+vocab_size = 150;
 color_spaces = "lab";
 num_of_bins = 2;
 num_of_steps = 100;
@@ -25,16 +25,14 @@ metrics = "euclidean";
 knn_normalize = "none";
 
 %% 1. Test affect of vocabulary size on build vocab
-% vocab_size = [50 100 150 200 250 300];
-vocab_size = [10 20];
-
+vocab_size = [50 100 150 200 250 300];
 
 results = run_experiments('build_vocab', vocab_size, num_of_steps, ...
     num_of_bins, color_spaces,  "none", train_image_paths, test_image_paths);
 [results, max_accuracy] = test_classifier(results, k_values, metrics, ... 
     knn_normalize, train_labels, test_labels, categories);
 
-plot_results('build vocab', vocab_size, results, "Vocabulary Size", ...
+plot_results('Build Vocab', vocab_size, results, "Vocabulary Size", ...
     "", [], false, "none", "vocab_size_plot")
 
 % Update parameter(s) based on best results
@@ -42,8 +40,8 @@ plot_results('build vocab', vocab_size, results, "Vocabulary Size", ...
     update_feature_params(results, max_accuracy);
 
 %% 2. Test affect of colour_space on build vocab
-% color_spaces = ["rgb" "hsv" "lab" "yiq" "ycbcr"];
-color_spaces = ["rgb", "lab"];
+color_spaces = ["grayscale", "rgb", "opponent", "rg", "lab"];
+% color_spaces = ["rgb", "lab"];
 
 
 results = run_experiments('build_vocab', vocab_size, num_of_steps, ...
@@ -51,7 +49,7 @@ results = run_experiments('build_vocab', vocab_size, num_of_steps, ...
 [results, max_accuracy] = test_classifier(results, k_values, metrics, ...
     knn_normalize, train_labels, test_labels, categories);
 
-plot_results('build vocab', color_spaces, results, "Colour Space", ...
+plot_results('Build Vocab', color_spaces, results, "Colour Space", ...
     "", [], true, vocab_size, "vocab_colour_space_plot")
 
 % Update parameter(s) based on best results
@@ -59,15 +57,16 @@ plot_results('build vocab', color_spaces, results, "Colour Space", ...
     update_feature_params(results, max_accuracy);
 
 %% 3. Test affect of bin size on build vocab
-num_of_bins = [1 2 3 4 5 6];
+num_of_bins = [2 3 4 5 6];
+vocab_size = vocab_size(1);
 
 results = run_experiments('build_vocab', vocab_size, num_of_steps, ...
     num_of_bins, color_spaces,  "none", train_image_paths, test_image_paths);
 [results, max_accuracy] = test_classifier(results, k_values, metrics, ...
     knn_normalize, train_labels, test_labels, categories);
 
-plot_results('build vocab', num_of_bins, results, "Bin Size", ...
-    "quant: %s", [string(vocab_size(1))], true, color_spaces, "vocab_bin_size_plot")
+plot_results('build_vocab_odd_split', num_of_bins, results, "Bin Size", ...
+    "Vocab size: %s", [string(vocab_size(1))], true, color_spaces, "vocab_bin_size_plot")
 
 % Update parameter(s) based on best results
 [vocab_size, color_spaces, num_of_bins, num_of_steps, normalize] = ...
@@ -81,8 +80,8 @@ results = run_experiments('build_vocab', vocab_size, num_of_steps, ...
 [results, max_accuracy] = test_classifier(results, k_values, metrics, ...
     knn_normalize, train_labels, test_labels, categories);
 
-plot_results('build vocab', num_of_bins, results, "Step Size", ...
-    "quant: %s", [string(vocab_size(1))], true, color_spaces, "vocab_step_size_plot")
+plot_results('build_vocab_odd_split', num_of_steps, results, "Step Size", ...
+    "Size: %s, Colour: %s", [string(vocab_size(1)), color_spaces(1)], true, num_of_bins, "vocab_step_size_plot")
 
 % Update parameter(s) based on best results
 [vocab_size, color_spaces, num_of_bins, num_of_steps, normalize] = ...
@@ -90,7 +89,7 @@ plot_results('build vocab', num_of_bins, results, "Step Size", ...
 
 %% 4. Test affect of k on classifier
 
-color_spaces = color_spaces(1);
+num_of_steps = num_of_steps(1);
 k_values = 1:2:40;
 
 results = run_experiments('build_vocab', vocab_size, num_of_steps, ...
@@ -98,9 +97,8 @@ results = run_experiments('build_vocab', vocab_size, num_of_steps, ...
 [results, max_accuracy] = test_classifier(results, k_values, metrics, ...
     knn_normalize, train_labels, test_labels, categories);
 
-plot_results("classifier", k_values, results, "K Value", "quant: %s, ..." + ...
-    " colour space: %s, proportion: %s", [vocab_size(1), ...
-    color_spaces(1), string(num_of_bins)], false, "none", "vocab_k_values_plot")
+plot_results("classifier", k_values, results, "K Value", "Size: %s, Colour: %s, Bin: %s, Step: %s", [vocab_size(1), ...
+    color_spaces(1), string(num_of_bins), string(num_of_steps)], false, "none", "vocab_k_values_plot")
 
 % Update parameter(s) based on best results
 [k_values, metrics, knn_normalize] = update_classifier_params(max_accuracy);
@@ -114,9 +112,8 @@ results(4:end, 1) = {[]}; % Clear results varriable
 [results, max_accuracy] = test_classifier(results, k_values, metrics, ...
     knn_normalize, train_labels, test_labels, categories);
 
-plot_results("classifier", metrics, results, "Metric", ...
-    "quant: %s, colour space: %s, proportion: %s", [vocab_size(1), ...
-    color_spaces(1), string(num_of_bins)], true, k_values, "vocab_metrics_plot")
+plot_results("classifier", metrics, results, "Metric", "Size: %s, Colour: %s, Bin: %s, Step: %s", [vocab_size(1), ...
+    color_spaces(1), string(num_of_bins), string(num_of_steps)], true, k_values, "vocab_metrics_plot")
 
 % Update parameter(s) based on best results
 [k_values, metrics, knn_normalize] = update_classifier_params(max_accuracy);
@@ -130,14 +127,14 @@ results(4:end, 1) = {[]}; % Clear results varriable
 [results, max_accuracy] = test_classifier(results, k_values, metrics, ...
     knn_normalize, train_labels, test_labels, categories);
 
-plot_results("classifier", knn_normalize, results, "Normalize", ...
-    "quant: %s, colour space: %s, proportion: %s", [vocab_size(1), ...
-    color_spaces(1), string(num_of_bins)], true, k_values, "vocab_knn_normalize_plot")
+plot_results("classifier", knn_normalize, results, "Normalize", "Size: %s, Colour: %s, Bin: %s, Step: %s", [vocab_size(1), ...
+    color_spaces(1), string(num_of_bins), string(num_of_steps)], true, k_values, "vocab_knn_normalize_plot")
 
 % Update parameter(s) based on best results
 [k_values, metrics, knn_normalize] = update_classifier_params(max_accuracy);
 
 %% Create final results and confusion matrix
+
 
 knn_normalize = knn_normalize(1);
 

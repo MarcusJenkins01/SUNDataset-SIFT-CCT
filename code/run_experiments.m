@@ -36,15 +36,28 @@ function experiments = run_experiments(FEATURE, sizes, interpolations, ...
                                     color_space, preserve_aspect);
                             case 'spatial pyramids'
                                 % YOU CODE spatial pyramids method
-                                train_image_feats = get_spatial_pyramids(train_image_paths, size, preserve_aspect);
-                                test_image_feats  = get_spatial_pyramids(test_image_paths, size, preserve_aspect);
+                                train_image_feats = get_spatial_pyramids(train_image_paths, size, preserve_aspect, color_space);
+                                test_image_feats  = get_spatial_pyramids(test_image_paths, size, preserve_aspect, color_space);
                             case 'build_vocab'
-                                step_size = calculate_step_size(interpolation, preserve_aspect);
-                                vocab = build_vocabulary(train_image_paths, size, step_size, preserve_aspect, color_space);
+                                % step_size = calculate_step_size(interpolation, preserve_aspect);
+                                vocab = build_vocabulary(train_image_paths, size, interpolation, preserve_aspect, color_space);
                                 save('vocab.mat', 'vocab')
 
-                                train_image_feats = get_bags_of_sifts(train_image_paths, 8, 2, 'lab');
-                                test_image_feats  = get_bags_of_sifts(test_image_paths, 8, 2, 'lab'); 
+                                train_image_feats = get_bags_of_sifts(train_image_paths, 8, 2, color_space, false);
+                                test_image_feats  = get_bags_of_sifts(test_image_paths, 8, 2, color_space, false); 
+                            case 'bag_of_sift'
+                                step_size = calculate_step_size(interpolation, preserve_aspect);
+
+                                train_image_feats = get_bags_of_sifts(train_image_paths, step_size, preserve_aspect, color_space);
+                                test_image_feats  = get_bags_of_sifts(test_image_paths, step_size, preserve_aspect, color_space);
+                            case 'bag_of_sift_col'
+                                vocab = build_vocabulary(train_image_paths, 150, 50, 4, color_space);
+                                save('vocab.mat', 'vocab')
+
+                                step_size = calculate_step_size(interpolation, preserve_aspect);
+
+                                train_image_feats = get_bags_of_sifts(train_image_paths, step_size, preserve_aspect, color_space);
+                                test_image_feats  = get_bags_of_sifts(test_image_paths, step_size, preserve_aspect, color_space);
                         end
 
                         % Store experiment results in corosponding column
